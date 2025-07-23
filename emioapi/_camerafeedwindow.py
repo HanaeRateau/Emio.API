@@ -13,7 +13,7 @@ from PIL import ImageTk, Image
 """	
 class CameraFeedWindow():
     windowCount = 0
-    def __init__(self, rootWindow, name=f"Camera Feed Window", trackbarParams={}, *args, **kwargs):
+    def __init__(self, rootWindow, name=f"Camera Feed Window", trackbarParams={}, on_change=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         CameraFeedWindow.windowCount += 1
         self.rootWindow = rootWindow
@@ -37,7 +37,7 @@ class CameraFeedWindow():
                 ttk.Label(self.window, text=key).pack()
                 self.trackbars[key] = ttk.Scale(self.window, from_=0, to=255, orient='horizontal')
                 self.trackbars[key].set(self.default_param[key])
-                self.trackbars[key].command = self.on_change
+                self.trackbars[key].configure(command = self.on_change if on_change is None else on_change)
                 self.trackbars[key].pack(fill="x", padx=5)
             self.resetButton = ttk.Button(self.window, text="Reset From File", command=self.reset)
             self.resetButton.pack(pady=5)
@@ -50,8 +50,8 @@ class CameraFeedWindow():
         self.running = False
 
     def on_change(self, value):
-        for key, val in self.trackbarParams.items():
-            self.trackbarParams[key] = self.trackbars[key].get()
+        for key, _ in self.trackbarParams.items():
+            self.trackbarParams[key] = int(self.trackbars[key].get())
 
     def reset(self):
         for key, val in self.trackbarParams.items():

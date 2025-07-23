@@ -1,6 +1,8 @@
 # Emio API
 
-Emio API is a simple and easy-to-use API for controling the Emio robot.
+Emio API is a simple and easy-to-use API for controling the Emio robot from [Compliance Robotics](https://compliance-robotics.com/).
+
+The `emioapi` package is published on [PyPI](https://pypi.org/project/emioapi/).
 
 ## Installation
 To install the Emio API, you can use pip:

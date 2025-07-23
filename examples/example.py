@@ -11,7 +11,7 @@ sys.path.append(os.path.dirname(os.path.realpath(__file__))+'/..')
 from emioapi import EmioAPI
 
 FORMAT = "[%(levelname)s]\t[%(filename)s:%(lineno)s - %(funcName)s() ] %(message)s"
-logging.basicConfig(format=FORMAT, level=logging.DEBUG)
+logging.basicConfig(format=FORMAT, level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -77,7 +77,7 @@ def main():
 
                 i += 1
         
-        emio.disconnect()
+            emio.disconnect()
 
 
     except KeyboardInterrupt:

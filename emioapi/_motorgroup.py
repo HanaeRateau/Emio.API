@@ -16,6 +16,7 @@ def listMotors():
     """
     ports = []
     comports = serial.tools.list_ports.comports()
+    
     for p in comports:
         if p.manufacturer is not None and "FTDI" in p.manufacturer:
             ports.append(p.device)
@@ -23,6 +24,11 @@ def listMotors():
             ports.append(p.device)
         elif p.serial_number is not None and "FTDI" in p.serial_number:
             ports.append(p.device)
+
+    if ports is None or len(ports) == 0:
+        logger.warning("No motor found. Please check the connection.")
+        return ports
+    
     return ports
 
 
