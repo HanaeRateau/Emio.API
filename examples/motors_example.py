@@ -7,8 +7,7 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__))+'/..')
 from emioapi import EmioMotors
-
-logger = logging.getLogger(__name__)
+from emioapi._logging_config import logger
 
 def main(emio: EmioMotors, loops=1):
 

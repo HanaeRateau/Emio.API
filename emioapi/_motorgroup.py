@@ -1,11 +1,7 @@
-import time
 from dynamixel_sdk import *
-import emioapi._emiomotorsparameters as MotorsParametersTemplate
-import logging
 
-FORMAT = "[%(levelname)s]\t[%(filename)s:%(lineno)s - %(funcName)s() ] %(message)s"
-logging.basicConfig(format=FORMAT, level=logging.INFO)
-logger = logging.getLogger(__name__)
+import emioapi._emiomotorsparameters as MotorsParametersTemplate
+from emioapi._logging_config import logger
 
 def listMotors():
     """
@@ -147,8 +143,6 @@ class MotorGroup:
         """Check if the motor group is connected."""
         try:
             if self.portHandler and self.portHandler.is_open  and self._isDeviceDetected():
-                logger.debug(f"Trying to check connection on {self.deviceName}")
-                # self.groupSyncReadMoving.txRxPacket() # Check if the port is open. This call fails if the port is disconnected.
                 return True
         except Exception as e:
             logger.exception(f"Failed to check connection: {e}")

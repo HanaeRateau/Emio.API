@@ -34,10 +34,10 @@ class CameraFeedWindow():
         self.trackbars = {}
         if self.trackbarParams:
             for key, _ in self.trackbarParams.items():
-                ttk.Label(self.window, text=key).pack()
                 self.trackbars[key] = ttk.Scale(self.window, from_=0, to=255, orient='horizontal')
                 self.trackbars[key].set(self.default_param[key])
                 self.trackbars[key].configure(command = self.on_change if on_change is None else on_change)
+                ttk.Label(self.window, text=key).pack()
                 self.trackbars[key].pack(fill="x", padx=5)
             self.resetButton = ttk.Button(self.window, text="Reset From File", command=self.reset)
             self.resetButton.pack(pady=5)

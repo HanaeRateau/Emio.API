@@ -5,17 +5,13 @@ import multiprocessing.sharedctypes
 from multiprocessing.synchronize import Lock
 from multiprocessing import Process
 import multiprocessing
-import logging
 import time
 from ctypes import c_wchar_p
 
 import numpy as np
 
 import emioapi._depthcamera as depthcamera
-
-FORMAT = "[%(levelname)s]\t[%(filename)s:%(lineno)s - %(funcName)s() ] %(message)s"
-logging.basicConfig(format=FORMAT, level=logging.INFO)
-logger = logging.getLogger(__name__)
+from emioapi._logging_config import logger
 
 
 class MultiprocessEmioCamera:

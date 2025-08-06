@@ -27,7 +27,7 @@ Repository = "https://github.com/SofaComplianceRobotics/Emio.API"
 
 
 [tool.setuptools.package-data]
-emioapi = ["cameraparameter.json"]
+emioapi = ["cameraparameter.json", "camera_2d_points.csv"]
 
 
 #######

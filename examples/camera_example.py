@@ -7,10 +7,12 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__))+'/..')
 from emioapi import EmioCamera
+from emioapi._logging_config import logger
 
-logger = logging.getLogger(__name__)
 
 def main(emio: EmioCamera):
+
+    emio.calibrate()  # calibrate the camera if needed
 
     while emio.is_running:
         try:
@@ -22,7 +24,8 @@ def main(emio: EmioCamera):
             logger.info(f"Camera tracking: {emio.track_markers}")
             logger.info(f"Camera compute point cloud: {emio.compute_point_cloud}")
             logger.info(f"Camera is running: {emio.is_running}")
-            logger.info(f"Count tracker positions: {len(emio.trackers_pos)}")
+            logger.info(f"Count tracker: {len(emio.trackers_pos)}")
+            logger.info(f"Trackers positions: {emio.trackers_pos}")
             logger.info(f"Point cloud shape: {emio.point_cloud.shape}")
             logger.info(f"HSV Frame shape: {emio.hsv_frame.shape}")
             logger.info(f"Mask Frame shape: {emio.mask_frame.shape}")

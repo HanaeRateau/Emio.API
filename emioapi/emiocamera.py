@@ -1,13 +1,8 @@
 import threading
-import logging
-
 import numpy as np
 
-import emioapi._depthcamera as depthcamera
-
-FORMAT = "[%(levelname)s]\t[%(filename)s:%(lineno)s - %(funcName)s() ] %(message)s"
-logging.basicConfig(format=FORMAT, level=logging.INFO)
-logger = logging.getLogger(__name__)
+from emioapi._depthcamera import *
+from emioapi._logging_config import logger
 
 
 class EmioCamera:
@@ -27,7 +22,7 @@ class EmioCamera:
         from emioapi import EmioCamera
 
         # Create an instance of EmioCamera
-        camera = EmioCamera(show=True, track_markers=True, compute_point_cloud=True)
+        camera = EmioCamera(show=True, track_markers=True, compute_point_cloud=True, configuration="extended")
 
         # Open the camera
         if camera.open():
@@ -61,7 +56,7 @@ class EmioCamera:
     """
     _lock = threading.Lock()
     _compute_point_cloud: bool = False
-    _camera: depthcamera.DepthCamera = None
+    _camera: DepthCamera = None
     _tracking: bool = True
     _running: bool = False
     _parameter: dict = None
@@ -73,7 +68,13 @@ class EmioCamera:
     camera_serial: str = None
 
 
-    def __init__(self, camera_serial=None, parameter=None, show=False, track_markers=True, compute_point_cloud=False):
+    def __init__(self,  
+                 camera_serial: str=None, 
+                 parameter: dict=None, 
+                 show: bool=False, 
+                 track_markers: bool=False, 
+                 compute_point_cloud: bool=False,
+                 configuration: str="extended"):
         """
         Initialize the camera.
         Args:
@@ -82,11 +83,13 @@ class EmioCamera:
             show: bool:  Whether to show the camera HSV and Mask frames or not.
             track_markers: bool:  Whether to track objects or not.
             compute_point_cloud: bool: Whether to compute the point cloud or not.
+            configuration: str: Configuration of Emio, either "extended" (default) or "compact"
         """
         self.camera_serial = camera_serial
         self._tracking = track_markers
         self._show = show
         self._compute_point_cloud = compute_point_cloud
+        self.configuration = configuration
         if parameter is not None:
             self._parameter = parameter
 
@@ -96,7 +99,30 @@ class EmioCamera:
     #  PROPERTIES
     ##########################
 
+#region properties
 
+
+    @property
+    def depth_frame(self):
+        """
+        Get the latest depth frame
+        Returns:
+            numpy.ndarray: the latest depth frame
+        """
+        if self.is_running:
+            return self._camera.depth_frame        
+        return None
+    
+    @property
+    def frame(self):
+        """
+        Get the latest color frame
+        Returns:
+            numpy.ndarray: the latest color frame
+        """
+        if self.is_running:
+            return self._camera.frame
+        return None
 
     @property
     def is_running(self) -> bool:
@@ -186,7 +212,7 @@ class EmioCamera:
         Returns:
             dict: The camera parameters.
         """
-        return self._camera.parameter
+        return self._camera.parameter if self._camera else DEFAULT_CAMERA_PARAMS
     
 
     @parameters.setter
@@ -267,12 +293,22 @@ class EmioCamera:
             else:
                 return None
             
+    @property
+    def calibration_status(self) -> int:
+        """
+        Get the calibration status of the camera.
+        Returns:
+            int: The calibration status of the camera. -1 if camera is None
+        """
+        return self._camera.calibration_status if self._camera  else -1
+            
+#endregion
 
 
     ##########################
     #  METHODS
     ##########################
-
+#region Methods
 
     @staticmethod
     def listCameras() -> list:
@@ -282,7 +318,7 @@ class EmioCamera:
         Returns:
             list: A list of the serial numbers as string.
         """
-        return depthcamera.listCameras()
+        return listCameras()
     
 
     def open(self, camera_serial: str=None) -> bool:
@@ -307,10 +343,12 @@ class EmioCamera:
                 self.camera_serial = camera_serial
 
             logger.debug("Starting camera with show: {}, tracking: {}, compute_point_cloud: {}".format(self._show, self._tracking, self._compute_point_cloud))
-            self._camera = depthcamera.DepthCamera(camera_serial=self.camera_serial, parameter=self._parameter, 
-                                compute_point_cloud=self._compute_point_cloud, 
-                                show_video_feed=self._show, 
-                                tracking=self._tracking)
+            self._camera = DepthCamera(camera_serial=self.camera_serial, 
+                                       parameter=self._parameter, 
+                                       compute_point_cloud=self._compute_point_cloud, 
+                                       show_video_feed=self._show, 
+                                       tracking=self._tracking,
+                                       configuration=self.configuration)
             self.camera_serial = self._camera.camera_serial
             self._running = True
             logger.info(f"Camera {self.camera_serial} successfully started.")
@@ -321,19 +359,52 @@ class EmioCamera:
             self._running = False
             logger.error("Error opening camera: "+str(e))
             return False
+        
+        
+    def calibrate(self):
+        """
+        Calibrate the camera. You need to set up Emio in the calibration configuration before calling this method.
+        See the [Emio documentation](https://docs-support.compliance-robotics.com/docs/next/Users/Emio/getting-started-with-emio/).
+        """
+        if self._camera is not None:
+            self._camera.calibrate()
+
+
+    def image_to_simulation(self, x: int, y: int, depth: float = None) -> list[float]:
+        """
+        Get the 3D point in the simulation reference frame from the pixels and depth
+
+        Args:
+            x, y: int: the horizontal and vertical position in the image/frame
+
+        Returns:
+            a list of float of the corresponding 3D point in the simulation reference frame
+        """
+        if self.is_running:
+            if depth is None:
+                depth = self._camera.depth_frame[y][x]
+            return self._camera.position_estimator.camera_image_to_simulation(x, y, depth)
+        
+        return None
+
 
     def update(self):
         """
             Update the camera frames and tracking elements (markers and point cloud)
         """
-        self._camera.update()
-        with self._lock:
-            self._hsv_frame = self._camera.hsvFrame
-            self._mask_frame = self._camera.maskFrame
-            if self._tracking:
-                self._trackers_pos = self._camera.trackers_pos
-            if self._compute_point_cloud:
-                    self._point_cloud = self._camera.point_cloud
+        if self._camera is not None:
+            self._camera.update()
+            with self._lock:
+                self._hsv_frame = self._camera.hsvFrame
+                self._mask_frame = self._camera.maskFrame
+                if self._tracking:
+                    self._trackers_pos = []
+                    for p_camera in self._camera.trackers_pos:
+                        p_emio = [p_camera[0], p_camera[1], p_camera[2], 0, 0, 0, 1]
+                        self._trackers_pos.append(p_emio[0:3])
+                    logger.debug(f"Trackers positions in camera frame: {self._camera.trackers_pos}, converted to Emio frame: {self._trackers_pos}")
+                if self._compute_point_cloud:
+                        self._point_cloud = self._camera.point_cloud
         
     def close(self):
         """
@@ -342,3 +413,4 @@ class EmioCamera:
         self._running = False
         if self._camera is not None: 
             self._camera.close()
+#endregion
