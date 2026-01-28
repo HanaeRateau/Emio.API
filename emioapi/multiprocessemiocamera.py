@@ -10,7 +10,7 @@ from ctypes import c_wchar_p
 
 import numpy as np
 
-import emioapi._depthcamera as depthcamera
+from emioapi._depthcamera import *
 from emioapi._logging_config import logger
 
 
@@ -285,7 +285,13 @@ class MultiprocessEmioCamera:
 
     @staticmethod
     def listCameras():
-        return depthcamera.listCameras()
+        """
+        Static method to list all the Realsense cameras connected to the computer
+
+        Returns:
+            list: A list of the serial numbers as string.
+        """
+        return list_cameras()
 
 
     def __getstate__(self):

@@ -47,9 +47,8 @@ def main():
 
             i = 0
             while i<10:
-                time.sleep(1)
                 print("--" * 20)
-
+                time.sleep(1)
                 # camera 
                 emio.camera.update()
                 logger.info(f"Camera parameters: {emio.camera.parameters}")
@@ -66,10 +65,11 @@ def main():
 
                 #  Motors
                 new_pos = [((2*3.14)*((i+1)%8)/8)] * 4
-                logger.info(f"new_pos {new_pos}")
 
                 if emio.motors.is_connected:
                     emio.motors.angles = new_pos
+                    time.sleep(0.5)  # wait for the motors to move
+                    logger.info(f"new_pos {new_pos}")
                     emio.motors.printStatus()
 
                 i += 1

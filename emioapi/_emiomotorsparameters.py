@@ -54,7 +54,12 @@ if MY_DXL == 'X_SERIES' or MY_DXL == 'MX_SERIES': #from https://emanual.robotis.
     LEN_VELOCITY_TRAJECTORY     = 4
     ADDR_POSITION_TRAJECTORY    = 140
     LEN_POSITION_TRAJECTORY     = 4
-
+    ADDR_POSITION_P_GAIN        = 84
+    LEN_POSITION_P_GAIN         = 2
+    ADDR_POSITION_I_GAIN        = 82
+    LEN_POSITION_I_GAIN         = 2
+    ADDR_POSITION_D_GAIN        = 80
+    LEN_POSITION_D_GAIN         = 2
 
 elif MY_DXL == 'PRO_SERIES':
     ADDR_TORQUE_ENABLE          = 562       # Control table address is different in DYNAMIXEL model

@@ -7,7 +7,7 @@ from emioapi._logging_config import logger
 
 class EmioMotors:
     """
-    Class to control emio motors. 
+    Class to control emio motors.
     The class is designed to be used with the emio device.
     The motors are controlled in position mode. The class is thread-safe and can be used in a multi-threaded environment.
 
@@ -65,28 +65,28 @@ class EmioMotors:
 
     def lengthToPulse(self, displacement: list):
         """
-        Convert length (mm) to pulse using the conversion factor `lengthToPulse`. 
-        
+        Convert length (mm) to pulse using the conversion factor `lengthToPulse`.
+
         Args:
             displacement: list: list of length values in mm for each motor.
 
         Returns:
             A list of pulse values for each motor.
         """
-        return [int(item * self._length_to_pulse) for item in displacement]
+        return [self._pulse_center - int(item * self._length_to_pulse) for item in displacement]
 
 
     def pulseToLength(self, pulse: list):
         """
         Convert pulse to length (mm) using the conversion factor `lengthToPulse`.
-        
+
         Args:
             pulse: list of pulse integer values for each motor.
 
         Returns:
             A list of length values in mm for each motor.
         """
-        return [float(item) / self._length_to_pulse for item in pulse]
+        return [(self._pulse_center - float(item)) / self._length_to_pulse for item in pulse]
 
 
     def pulseToRad(self, pulse: list):
@@ -100,7 +100,7 @@ class EmioMotors:
             A list of angles in radians for each motor.
 
         """
-        return [float(item) / self._rad_to_pulse for item in pulse]
+        return [(self._pulse_center - float(item)) / self._rad_to_pulse for item in pulse]
 
 
     def pulseToDeg(self, pulse: list):
@@ -113,7 +113,7 @@ class EmioMotors:
         Returns:
             A list of angles in degrees for each motor.
         """
-        return [float(item) / self._rad_to_pulse * 180.0 / 3.1416 for item in pulse]
+        return [(self._pulse_center - float(item)) / self._rad_to_pulse * 180.0 / 3.1416 for item in pulse]
 
 
     def _openAndConfig(self, device_name: str=None) -> bool:
@@ -125,7 +125,7 @@ class EmioMotors:
                 if self._mg.deviceName is None:
                     logger.error("Device name is None. Please check the connection.")
                     return False
-                
+
                 self._mg.open()
                 self._mg.clearPort()
                 self._mg.setInPositionMode()
@@ -141,7 +141,7 @@ class EmioMotors:
     def open(self, device_name: str=None) -> bool:
         """
         Open the connection to the motors.
-        
+
         Args:
             device_name: str: if set, it will connect to the device with the given name, If not set, the first emio device will be used.
         """
@@ -154,7 +154,7 @@ class EmioMotors:
 
     def findAndOpen(self, device_name: str=None) -> int:
         """
-        Iterate over the serial ports and try to conenct to the first available emio motors. 
+        Iterate over the serial ports and try to conenct to the first available emio motors.
 
         Args:
             device_name: str: If set, It will try to connected to the given device name (port name)
@@ -202,7 +202,7 @@ class EmioMotors:
         with self._lock:
             logger.info(f"Current position of the motors in radians: {[ a%3.14 for a in self.pulseToRad(self._mg.getCurrentPosition())]}")
 
-    
+
 
     ####################
     #### PROPERTIES ####
@@ -215,7 +215,7 @@ class EmioMotors:
     def relativePos(self, init_pos: list, rel_pos: list):
         """
         Calculate the new position of the motors based on the initial position and relative position in pulses.
-        
+
         Args:
             init_pos: list of initial pulse values for each motor.
             rel_pos: list of relative pulse values for each motor.
@@ -260,7 +260,7 @@ class EmioMotors:
     def max_velocity(self)-> list:
         """Get the current velocity (rev/min) profile of the motors."""
         return self._max_vel
-    
+
     @max_velocity.setter
     def max_velocity(self, max_vel: list):
         """Set the maximum velocities (rev/min) in position mode.
@@ -271,33 +271,82 @@ class EmioMotors:
         with self._lock:
             self._mg.setVelocityProfile(max_vel)
 
+
+    @property
+    def position_p_gain(self) -> list:
+        """Get the current position P gains of the motors."""
+        with self._lock:
+            return self._mg.getPositionPGain()
+
+    @position_p_gain.setter
+    def position_p_gain(self, p_gains: list):
+        """Set the position P gains of the motors.
+        Arguments:
+            p_gains: list of position P gains for each motor.
+        """
+        with self._lock:
+            self._mg.setPositionPGain(p_gains)
+
+
+    @property
+    def position_i_gain(self) -> list:
+        """Get the current position I gains of the motors."""
+        with self._lock:
+            return self._mg.getPositionIGain()
+
+    @position_i_gain.setter
+    def position_i_gain(self, i_gains: list):
+        """Set the position I gains of the motors.
+        Arguments:
+            i_gains: list of position I gains for each motor.
+        """
+        with self._lock:
+            self._mg.setPositionIGain(i_gains)
+
+
+    @property
+    def position_d_gain(self) -> list:
+        """Get the current position D gains of the motors."""
+        with self._lock:
+            return self._mg.getPositionDGain()
+
+    @position_d_gain.setter
+    def position_d_gain(self, d_gains: list):
+        """Set the position D gains of the motors.
+        Arguments:
+            d_gains: list of position D gains for each motor.
+        """
+        with self._lock:
+            self._mg.setPositionDGain(d_gains)
+
+
     #### Read-only properties ####
     @property
     def is_connected(self) -> bool:
         """Check if the motors are connected."""
         with self._lock:
             return self._mg.isConnected
-        
+
 
     @property
     def device_name(self) -> str:
         """Get the name of the device."""
         with self._lock:
             return self._mg.deviceName
-        
-    
+
+
     @property
     def device_index(self) -> int:
         """Get the index of the device in the list of Emio Devices from EmioAPI"""
         return self._device_index
-    
+
 
     @property
     def moving(self) -> list:
         """Check if the motors are moving."""
         with self._lock:
             return self._mg.isMoving()
-    
+
 
     @property
     def moving_status(self) -> list:
@@ -308,21 +357,21 @@ class EmioMotors:
         See [here](https://emanual.robotis.com/docs/en/dxl/x/xc330-t288/#moving-status) for more details."""
         with self._lock:
             return self._mg.getMovingStatus()
-    
+
 
     @property
     def velocity(self) -> list:
         """Get the current velocity (rev/min) of the motors."""
         with self._lock:
             return self._mg.getCurrentVelocity()
-    
+
 
     @property
     def velocity_trajectory(self)-> list:
         """Get the velocity (rev/min) trajectory of the motors."""
         with self._lock:
             return self._mg.getVelocityTrajectory()
-    
+
 
     @property
     def position_trajectory(self)-> list:
